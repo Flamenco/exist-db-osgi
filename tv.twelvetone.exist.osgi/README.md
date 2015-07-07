@@ -13,8 +13,45 @@ The bundle exports all of the org.xmldb.api and org.exist.xmldb packages.
 We are hoping that the embedded eXist runtime will be faster than the http based one for server-side processing.  We are also hoping the eXist maintainers will:
  * *Get hip* to **OSGi** so that core features can be added at runtime instead of compile time.
  * Embrace **Maven** for handling dependency, build, and deployment needs.
+ 
+# Usage 1
 
-# Usage
+The exist-osgi bundle will register an IXmlDb service.  Use that service to initialize the exist-home directory.
+
+```
+public class Activator implements BundleActivator{
+    @Override
+    public void start(final BundleContext context) throws Exception {
+        ServiceTracker<IXmlDb,IXmlDb> tracker = new ServiceTracker<>(context, IXmlDb.class, new ServiceTrackerCustomizer<IXmlDb, IXmlDb>() {
+            @Override
+            public IXmlDb addingService(ServiceReference<IXmlDb> reference) {
+                IXmlDb xmlDb = context.getService(reference);
+                try {
+                    xmlDb.startup("/path-to-exist-home");
+                    xmlDb.test();
+                    xmlDb.shutdown();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return xmlDb;
+            }
+            @Override
+            public void modifiedService(ServiceReference<IXmlDb> reference, IXmlDb service) {               
+            }
+            @Override
+            public void removedService(ServiceReference<IXmlDb> reference, IXmlDb service) {                
+            }
+        });
+        tracker.open();
+    }
+    @Override
+    public void stop(BundleContext context) throws Exception {
+        // TODO Auto-generated method stub       
+    }
+}
+```
+
+# Usage 2
 
  * Add the bundle to your OSGi framework.  
  * From a client bundle, import the tv.twelvetone.exist.osgi, org.xmldb.api and org.exist.xmldb packages.
